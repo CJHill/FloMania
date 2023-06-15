@@ -35,6 +35,7 @@ protected:
 	void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
 private:
 	IOnlineSessionPtr  SessionInterface;
+	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
 	//
 	//Creating delegate variables that will be binded to the MPSubsystem's internal callbacks
 	//

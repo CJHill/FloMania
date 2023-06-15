@@ -30,4 +30,7 @@ private:
 
 	UFUNCTION()
 	void JoinButtonClicked();
+
+	//This pointer is a reference to this subsystem which handles all online sessions
+	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
 };

@@ -21,7 +21,7 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem() :
 
 void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
 {
-	if (!SessionInterface.IsValid())
+	if (!IsValidSessionInterface())
 	{
 		return;
 	}
@@ -53,6 +53,22 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FS
 
 void UMultiplayerSessionsSubsystem::FindSessions(int32 MaxSearchResults)
 {
+	if (!SessionInterface.IsValid())
+	{
+		return;
+	}
+	FindSessionsCompleteDelegateHandle = SessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegate);
+
+	LastSessionSearch = MakeShareable(new FOnlineSessionSearch());
+	LastSessionSearch->MaxSearchResults = MaxSearchResults;
+	LastSessionSearch->bIsLanQuery = IOnlineSubsystem::Get()->GetSubsystemName() == "NULL" ? true : false;
+	LastSessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	if (!SessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), LastSessionSearch.ToSharedRef()))
+	{
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegateHandle);
+		MultiplayerOnFindSessionsComplete.Broadcast(TArray<FOnlineSessionSearchResult>(), false);
+	}
 }
 
 void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult& SessionResult)
@@ -78,6 +94,16 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 
 void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 {
+	if (SessionInterface)
+	{
+		SessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegateHandle);
+	}
+	if (LastSessionSearch->SearchResults.Num() <= 0)
+	{
+		MultiplayerOnFindSessionsComplete.Broadcast(TArray<FOnlineSessionSearchResult>(), false);
+		return;
+	}
+	MultiplayerOnFindSessionsComplete.Broadcast(LastSessionSearch->SearchResults, bWasSuccessful);
 }
 
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
@@ -90,4 +116,18 @@ void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, 
 
 void UMultiplayerSessionsSubsystem::OnStartSessionComplete(FName SessionName, bool bWasSuccessful)
 {
+}
+
+bool UMultiplayerSessionsSubsystem::IsValidSessionInterface()
+{
+	if (SessionInterface)
+	{
+		IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get();
+		if (Subsystem)
+		{
+			SessionInterface = Subsystem->GetSessionInterface();
+		}
+
+	}
+	return SessionInterface.IsValid();
 }

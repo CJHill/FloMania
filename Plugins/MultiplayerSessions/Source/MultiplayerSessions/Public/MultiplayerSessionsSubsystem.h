@@ -64,9 +64,4 @@ private:
 	FDelegateHandle DestroySessionCompleteDelegateHandle;
 	FOnStartSessionCompleteDelegate StartSessionCompleteDelegate;
 	FDelegateHandle StartSessionCompleteDelegateHandle;
-
-	bool bCreateSessionOnDestroy{ false };
-	int32 LastNumPubConnections;
-	FString LastMatchType;
 };
-

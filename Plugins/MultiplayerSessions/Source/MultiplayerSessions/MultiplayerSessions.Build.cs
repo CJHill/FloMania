@@ -20,7 +20,7 @@ public class MultiplayerSessions : ModuleRules
 				// ... add other private include paths required here ...
 			}
 			);
-        PrivateIncludePaths.Add("MyProjectFolder/Headers");
+    
 
         PublicDependencyModuleNames.AddRange(
 			new string[]
